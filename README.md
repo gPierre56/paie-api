@@ -9,18 +9,20 @@ Ajouter un employé :
 
 Requête
 
-POST Entreprises/ajouter
+GET /referentiels
+
+POST /entreprises
 
 ContentType Application / Json
 
 {
   "matricule" : "DFGR6546"
-  "entreprise" : "1"
+  "codeEntreprise" : "DEV"
   "profil" : "2"
   "grade" : "3"
 }
 
-Réponse en cas de succès : 200
+Réponse en cas de succès : 201
 
 Réponse en cas d'erreur (Identifiant non reconnu ) : 
 
