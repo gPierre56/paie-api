@@ -34,6 +34,7 @@ Content-Type: application/json
 }
 ```
 
+
 ```
 Liste des employés
 
@@ -44,7 +45,7 @@ GET /Employes
 Réponse en cas de succès : 200
 ```
 
-
+```
 Ajouter un bulletin de salaire
 
 Requêtes
@@ -94,6 +95,7 @@ Réponse en cas de succès : 200
 
 ```
 
+```
 Page bulletin de salaire :
 
 Requête 
