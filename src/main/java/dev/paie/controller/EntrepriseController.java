@@ -16,8 +16,8 @@ import dev.paie.dto.EntrepriseDto;
 import dev.paie.service.EntrepriseService;
 
 /**
- * @author Guillaume
- *
+ * @author Guillaume Classe qui régit l'affichage des vues concernant les
+ *         entreprises
  */
 @RestController
 @RequestMapping(value = "/entreprises")
