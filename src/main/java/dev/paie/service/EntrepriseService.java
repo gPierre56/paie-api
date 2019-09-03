@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import dev.paie.dto.EntrepriseDto;
+import dev.paie.dto.EntrepriseDtoCodeMatricule;
 import dev.paie.repository.IEntrepriseRepository;
 
 /**
@@ -28,8 +28,8 @@ public class EntrepriseService {
 	/**
 	 * @return la liste de toutes les entreprises existantes en base
 	 */
-	public List<EntrepriseDto> recupCodeEtDenomination() {
-		return repository.findAll().stream().map(e -> new EntrepriseDto(e.getCode(), e.getDenomination()))
+	public List<EntrepriseDtoCodeMatricule> recupCodeEtDenomination() {
+		return repository.findAll().stream().map(e -> new EntrepriseDtoCodeMatricule(e.getCode(), e.getDenomination()))
 				.collect(Collectors.toList());
 	}
 

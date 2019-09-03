@@ -3,28 +3,32 @@
  */
 package dev.paie.dto;
 
+import java.util.List;
+
+import dev.paie.entites.Cotisation;
+
 /**
  * @author Guillaume
  *
  */
-public class EntrepriseDto {
+public class ProfilRemunerationDto {
 
 	private String code;
-	private String denomination;
+	private List<Cotisation> cotisations;
 
-	public EntrepriseDto(String code, String denomination) {
+	public ProfilRemunerationDto(String code, List<Cotisation> cotisations) {
 		super();
 		this.code = code;
-		this.denomination = denomination;
+		this.cotisations = cotisations;
 	}
 
-	public EntrepriseDto() {
+	public ProfilRemunerationDto() {
 		super();
 	}
 
 	@Override
 	public String toString() {
-		return "EntrepriseDto [code=" + code + ", denomination=" + denomination + "]";
+		return "ProfilRemunerationDto [code=" + code + ", cotisations=" + cotisations + "]";
 	}
 
 	@Override
@@ -32,7 +36,7 @@ public class EntrepriseDto {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((code == null) ? 0 : code.hashCode());
-		result = prime * result + ((denomination == null) ? 0 : denomination.hashCode());
+		result = prime * result + ((cotisations == null) ? 0 : cotisations.hashCode());
 		return result;
 	}
 
@@ -44,16 +48,16 @@ public class EntrepriseDto {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		EntrepriseDto other = (EntrepriseDto) obj;
+		ProfilRemunerationDto other = (ProfilRemunerationDto) obj;
 		if (code == null) {
 			if (other.code != null)
 				return false;
 		} else if (!code.equals(other.code))
 			return false;
-		if (denomination == null) {
-			if (other.denomination != null)
+		if (cotisations == null) {
+			if (other.cotisations != null)
 				return false;
-		} else if (!denomination.equals(other.denomination))
+		} else if (!cotisations.equals(other.cotisations))
 			return false;
 		return true;
 	}
@@ -73,17 +77,17 @@ public class EntrepriseDto {
 	}
 
 	/**
-	 * @return the denomination
+	 * @return the cotisations
 	 */
-	public String getDenomination() {
-		return denomination;
+	public List<Cotisation> getCotisations() {
+		return cotisations;
 	}
 
 	/**
-	 * @param denomination the denomination to set
+	 * @param cotisations the cotisations to set
 	 */
-	public void setDenomination(String denomination) {
-		this.denomination = denomination;
+	public void setCotisations(List<Cotisation> cotisations) {
+		this.cotisations = cotisations;
 	}
 
 }

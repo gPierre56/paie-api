@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import dev.paie.dto.EntrepriseDto;
+import dev.paie.dto.EntrepriseDtoCodeMatricule;
 import dev.paie.service.EntrepriseService;
 
 /**
@@ -33,7 +33,7 @@ public class EntrepriseController {
 	 * @return renvoie les codes et dénominations de toutes les entreprises en bdd
 	 */
 	@GetMapping
-	public ResponseEntity<List<EntrepriseDto>> getAllEntreprises() {
+	public ResponseEntity<List<EntrepriseDtoCodeMatricule>> getAllEntreprises() {
 
 		return new ResponseEntity<>(service.recupCodeEtDenomination(), HttpStatus.OK);
 

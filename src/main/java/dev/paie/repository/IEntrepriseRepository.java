@@ -13,4 +13,6 @@ import dev.paie.entites.Entreprise;
  */
 public interface IEntrepriseRepository extends JpaRepository<Entreprise, Integer> {
 
+	public Entreprise findByCode(String code);
+
 }
