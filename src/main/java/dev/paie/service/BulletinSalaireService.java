@@ -11,17 +11,29 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import dev.paie.dto.AjoutBulletinSalaireDto;
 import dev.paie.dto.BulletinSalaireDto;
+import dev.paie.dto.CollegueDto;
+import dev.paie.dto.CollegueDtoBulletinSalaire;
+import dev.paie.dto.CotisationsImposablesDto;
+import dev.paie.dto.CotisationsNonImposablesDto;
+import dev.paie.dto.DtoBulletinUnique;
+import dev.paie.dto.EntrepriseDtoBulletinSalaire;
+import dev.paie.dto.SalaireBrutDto;
+import dev.paie.dto.TableauCotisationsImposablesDto;
+import dev.paie.dto.TableauCotisationsNonImposablesDto;
 import dev.paie.dto.TraitementSalaireDto;
 import dev.paie.entites.BulletinSalaire;
+import dev.paie.entites.Cotisation;
 import dev.paie.entites.Periode;
 import dev.paie.entites.RemunerationEmploye;
 import dev.paie.exception.MatriculeInvalideException;
 import dev.paie.repository.IBulletinSalaireRepository;
 import dev.paie.repository.IPeriodeRepository;
 import dev.paie.repository.IRemunerationEmployeRepository;
+import dev.paie.utils.CalculSalaire;
 
 /**
  * @author Guillaume
@@ -39,6 +51,15 @@ public class BulletinSalaireService {
 	@Autowired
 	private IRemunerationEmployeRepository employeRepository;
 
+	@Autowired
+	private CalculSalaire calcul;
+
+	/**
+	 * @return Récupère la liste de toutes les informations stockées en base
+	 *         nécessaire à l'édition d'un bulletin de salaire. Après traitements et
+	 *         calculs, renvoie un objet de type DTO avec les informations
+	 *         demandées.
+	 */
 	public List<BulletinSalaireDto> recupererTousLesBulletins() {
 
 		// on récupère les informations dont on a besoin pour le traitement dans une
@@ -55,53 +76,24 @@ public class BulletinSalaireService {
 		// on scinde les cotisations en deux listes séparés, imposables et non
 		// imposables
 		for (int i = 0; i < recuperation.size(); i++) {
-			for (int j = 0; j < recuperation.get(i).getCotisationsBrutes().size(); j++) {
-				if (recuperation.get(i).getCotisationsBrutes().get(j).getImposable()) {
-					recuperation.get(i).getCotisationsImposables()
-							.add(recuperation.get(i).getCotisationsBrutes().get(j));
-				} else {
-					recuperation.get(i).getCotisationsNonImposables()
-							.add(recuperation.get(i).getCotisationsBrutes().get(j));
-				}
-			}
+			calcul.separerCotisations(recuperation.get(i));
 		}
 
 		// on calcule le salaire brut
 		for (int i = 0; i < recuperation.size(); i++) {
-			if (recuperation.get(i).getPrimeExceptionelle() != null) {
-				recuperation.get(i).setSalaireBrut((recuperation.get(i).getNbHeuresBase()
-						.multiply(recuperation.get(i).getTauxBase()).add(recuperation.get(i).getPrimeExceptionelle())));
-			} else {
-				recuperation.get(i).setSalaireBrut(
-						(recuperation.get(i).getNbHeuresBase().multiply(recuperation.get(i).getTauxBase())));
-			}
+			calcul.calculerSalaireBrut(recuperation.get(i));
 
 		}
 
 		// on calcule le salaire net imposable
 		for (int i = 0; i < recuperation.size(); i++) {
-			BigDecimal charges = BigDecimal.ZERO;
-			for (int j = 0; j < recuperation.get(i).getCotisationsNonImposables().size(); j++) {
-
-				if (recuperation.get(i).getCotisationsNonImposables().get(j).getTauxSalarial() != null) {
-					charges = charges.add(recuperation.get(i).getCotisationsNonImposables().get(j).getTauxSalarial()
-							.multiply(recuperation.get(i).getSalaireBrut()));
-
-				}
-				recuperation.get(i).setNetImposable(recuperation.get(i).getSalaireBrut().subtract(charges));
-			}
+			calcul.calculSalaireNet(recuperation.get(i));
 		}
 
 		// on calcule le net à payer
 		for (int i = 0; i < recuperation.size(); i++) {
 
-			BigDecimal charges = BigDecimal.ZERO;
-			for (int j = 0; j < recuperation.get(i).getCotisationsImposables().size(); j++) {
-				charges = charges.add(recuperation.get(i).getSalaireBrut()
-						.multiply(recuperation.get(i).getCotisationsImposables().get(j).getTauxSalarial()));
-			}
-
-			recuperation.get(i).setNetAPayer(recuperation.get(i).getNetImposable().subtract(charges));
+			calcul.calculNetAPayer(recuperation.get(i));
 
 		}
 
@@ -135,6 +127,75 @@ public class BulletinSalaireService {
 			throw new MatriculeInvalideException("Matricule introuvable");
 		}
 		repository.save(bulletin);
+
+	}
+
+	public DtoBulletinUnique trouverUnBulletin(String code) {
+		RestTemplate rt = new RestTemplate();
+		BulletinSalaire bulletinBrut = repository.findByCode(code);
+		DtoBulletinUnique resultat = new DtoBulletinUnique();
+		resultat.setEntreprise(
+				new EntrepriseDtoBulletinSalaire(bulletinBrut.getRemunerationEmploye().getEntreprise().getCode(),
+						bulletinBrut.getRemunerationEmploye().getEntreprise().getDenomination(),
+						bulletinBrut.getRemunerationEmploye().getEntreprise().getSiret()));
+		CollegueDto employe = rt.getForObject("https://guillaume-top-collegues.herokuapp.com/collegue/"
+				.concat(bulletinBrut.getRemunerationEmploye().getMatricule()), CollegueDto.class);
+
+		resultat.setEmploye(new CollegueDtoBulletinSalaire(employe.getMatricule(), employe.getNom(),
+				employe.getPrenom(), employe.getDateDeNaissance()));
+
+		resultat.setPeriode(bulletinBrut.getPeriode());
+		resultat.setSalaireBrut(new SalaireBrutDto(bulletinBrut.getRemunerationEmploye().getGrade().getNbHeuresBase(),
+				bulletinBrut.getRemunerationEmploye().getGrade().getTauxBase()));
+		if (bulletinBrut.getPrimeExceptionnelle() != null
+				&& !bulletinBrut.getPrimeExceptionnelle().equals(BigDecimal.ZERO)) {
+			resultat.getSalaireBrut().setSalaireBrut(
+					resultat.getSalaireBrut().getSalaireBrut().add(bulletinBrut.getPrimeExceptionnelle()));
+		}
+		List<Cotisation> cotisationsNonImposables = bulletinBrut.getRemunerationEmploye().getProfilRemuneration()
+				.getCotisations().stream().filter(c -> !c.getImposable()).collect(Collectors.toList());
+
+		List<CotisationsNonImposablesDto> cotisationsNonImposablesDto = cotisationsNonImposables.stream().peek(c -> {
+			if (c.getTauxSalarial() == null) {
+				c.setTauxSalarial(BigDecimal.ZERO);
+			}
+			if (c.getTauxPatronal() == null) {
+				c.setTauxPatronal(BigDecimal.ZERO);
+			}
+		}).map(c -> new CotisationsNonImposablesDto(c.getLibelle(), resultat.getSalaireBrut().getSalaireBrut(),
+				c.getTauxSalarial(), resultat.getSalaireBrut().getSalaireBrut().multiply(c.getTauxSalarial()),
+				c.getTauxPatronal(), c.getTauxPatronal().multiply(resultat.getSalaireBrut().getSalaireBrut())))
+				.collect(Collectors.toList());
+		BigDecimal retenue = BigDecimal.ZERO;
+		Optional<BigDecimal> retenueOptional = cotisationsNonImposablesDto.stream().map(c -> c.getMontantSalarial())
+				.reduce((c1, c2) -> (c1.add(c2)));
+		if (retenueOptional.isPresent()) {
+			retenue = retenueOptional.get();
+		}
+
+		resultat.setTableauCotisationsNonImposables(new TableauCotisationsNonImposablesDto(cotisationsNonImposablesDto,
+				retenue, resultat.getSalaireBrut().getSalaireBrut().subtract(retenue)));
+
+		List<Cotisation> cotisationsImposables = bulletinBrut.getRemunerationEmploye().getProfilRemuneration()
+				.getCotisations().stream().filter(c -> c.getImposable()).collect(Collectors.toList());
+
+		List<CotisationsImposablesDto> cotisationsImposablesDto = cotisationsImposables.stream()
+				.map(c -> new CotisationsImposablesDto(c.getLibelle(), resultat.getSalaireBrut().getSalaireBrut(),
+						c.getTauxSalarial(), resultat.getSalaireBrut().getSalaireBrut().multiply(c.getTauxSalarial()),
+						null, null))
+				.collect(Collectors.toList());
+
+		BigDecimal retenue2 = BigDecimal.ZERO;
+		Optional<BigDecimal> retenue2Optional = cotisationsImposablesDto.stream().map(c -> c.getMontantSalarial())
+				.reduce((c1, c2) -> (c1.add(c2)));
+		if (retenue2Optional.isPresent()) {
+			retenue2 = retenue2Optional.get();
+		}
+
+		resultat.setTableauCotisationsImposablesDto(new TableauCotisationsImposablesDto(cotisationsImposablesDto,
+				resultat.getTableauCotisationsNonImposables().getNetImposable().subtract(retenue2)));
+
+		return resultat;
 
 	}
 

@@ -13,4 +13,6 @@ import dev.paie.entites.BulletinSalaire;
  */
 public interface IBulletinSalaireRepository extends JpaRepository<BulletinSalaire, String> {
 
+	public BulletinSalaire findByCode(String code);
+
 }
