@@ -2,6 +2,7 @@ package dev.paie.entites;
 
 import java.math.BigDecimal;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -16,7 +17,9 @@ public class Grade {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
 	private String code;
+	@Column(precision = 5, scale = 2)
 	private BigDecimal nbHeuresBase;
+	@Column(precision = 8, scale = 6)
 	private BigDecimal tauxBase;
 
 	public Grade() {

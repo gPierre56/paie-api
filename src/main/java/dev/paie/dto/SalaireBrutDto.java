@@ -4,6 +4,7 @@
 package dev.paie.dto;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 /**
  * @author Guillaume
@@ -19,7 +20,7 @@ public class SalaireBrutDto {
 		super();
 		this.nbHeures = nbHeures;
 		this.taux = taux;
-		this.salaireBrut = this.nbHeures.multiply(this.taux);
+		this.salaireBrut = this.nbHeures.multiply(this.taux).setScale(2, RoundingMode.HALF_UP);
 	}
 
 	public SalaireBrutDto() {

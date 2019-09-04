@@ -3,6 +3,7 @@ package dev.paie.entites;
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -26,6 +27,7 @@ public class BulletinSalaire {
 	@ManyToOne
 	@JoinColumn
 	private Periode periode;
+	@Column(precision = 7, scale = 2)
 	private BigDecimal primeExceptionnelle;
 
 	private ZonedDateTime dateCreation;

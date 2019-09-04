@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import dev.paie.dto.AjoutBulletinSalaireDto;
 import dev.paie.dto.BulletinSalaireDto;
 import dev.paie.dto.DtoBulletinUnique;
+import dev.paie.exception.BulletinNonTrouveException;
 import dev.paie.exception.MatriculeInvalideException;
 import dev.paie.service.BulletinSalaireService;
 
@@ -53,7 +54,11 @@ public class BulletinSalaireController {
 
 	@GetMapping(value = "/bulletins/{code}")
 	public ResponseEntity<DtoBulletinUnique> getOneBulletinSalaire(@PathVariable String code) {
-		return new ResponseEntity<>(service.trouverUnBulletin(code), HttpStatus.OK);
+		try {
+			return new ResponseEntity<>(service.trouverUnBulletin(code), HttpStatus.OK);
+		} catch (BulletinNonTrouveException e) {
+			return ResponseEntity.notFound().header("Erreur", e.getErreur()).build();
+		}
 	}
 
 }

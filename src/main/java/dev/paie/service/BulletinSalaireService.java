@@ -4,6 +4,7 @@
 package dev.paie.service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -11,17 +12,12 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import dev.paie.dto.AjoutBulletinSalaireDto;
 import dev.paie.dto.BulletinSalaireDto;
-import dev.paie.dto.CollegueDto;
-import dev.paie.dto.CollegueDtoBulletinSalaire;
 import dev.paie.dto.CotisationsImposablesDto;
 import dev.paie.dto.CotisationsNonImposablesDto;
 import dev.paie.dto.DtoBulletinUnique;
-import dev.paie.dto.EntrepriseDtoBulletinSalaire;
-import dev.paie.dto.SalaireBrutDto;
 import dev.paie.dto.TableauCotisationsImposablesDto;
 import dev.paie.dto.TableauCotisationsNonImposablesDto;
 import dev.paie.dto.TraitementSalaireDto;
@@ -29,10 +25,12 @@ import dev.paie.entites.BulletinSalaire;
 import dev.paie.entites.Cotisation;
 import dev.paie.entites.Periode;
 import dev.paie.entites.RemunerationEmploye;
+import dev.paie.exception.BulletinNonTrouveException;
 import dev.paie.exception.MatriculeInvalideException;
 import dev.paie.repository.IBulletinSalaireRepository;
 import dev.paie.repository.IPeriodeRepository;
 import dev.paie.repository.IRemunerationEmployeRepository;
+import dev.paie.utils.AffectationDtoBulletin;
 import dev.paie.utils.CalculSalaire;
 
 /**
@@ -53,6 +51,9 @@ public class BulletinSalaireService {
 
 	@Autowired
 	private CalculSalaire calcul;
+
+	@Autowired
+	private AffectationDtoBulletin affectation;
 
 	/**
 	 * @return Récupère la liste de toutes les informations stockées en base
@@ -130,28 +131,27 @@ public class BulletinSalaireService {
 
 	}
 
-	public DtoBulletinUnique trouverUnBulletin(String code) {
-		RestTemplate rt = new RestTemplate();
+	/**
+	 * @param code Cette méthode prend en paramètre un code correspondant au
+	 *             bulletin de salaire demandé et sur lequel vont être effectués les
+	 *             calculs
+	 * @return La méthode retourne un objet de type DtoBulletinUnique qui correspond
+	 *         aux données dont aura besoin l'interface pour afficher tous les
+	 *         détails et données calculés d'un bulletin de salaire
+	 * @throws BulletinNonTrouveException La méthode renvoie une exception si un
+	 *                                    code inconnu a été renseigné dans l'url
+	 */
+	public DtoBulletinUnique trouverUnBulletin(String code) throws BulletinNonTrouveException {
 		BulletinSalaire bulletinBrut = repository.findByCode(code);
-		DtoBulletinUnique resultat = new DtoBulletinUnique();
-		resultat.setEntreprise(
-				new EntrepriseDtoBulletinSalaire(bulletinBrut.getRemunerationEmploye().getEntreprise().getCode(),
-						bulletinBrut.getRemunerationEmploye().getEntreprise().getDenomination(),
-						bulletinBrut.getRemunerationEmploye().getEntreprise().getSiret()));
-		CollegueDto employe = rt.getForObject("https://guillaume-top-collegues.herokuapp.com/collegue/"
-				.concat(bulletinBrut.getRemunerationEmploye().getMatricule()), CollegueDto.class);
-
-		resultat.setEmploye(new CollegueDtoBulletinSalaire(employe.getMatricule(), employe.getNom(),
-				employe.getPrenom(), employe.getDateDeNaissance()));
-
-		resultat.setPeriode(bulletinBrut.getPeriode());
-		resultat.setSalaireBrut(new SalaireBrutDto(bulletinBrut.getRemunerationEmploye().getGrade().getNbHeuresBase(),
-				bulletinBrut.getRemunerationEmploye().getGrade().getTauxBase()));
-		if (bulletinBrut.getPrimeExceptionnelle() != null
-				&& !bulletinBrut.getPrimeExceptionnelle().equals(BigDecimal.ZERO)) {
-			resultat.getSalaireBrut().setSalaireBrut(
-					resultat.getSalaireBrut().getSalaireBrut().add(bulletinBrut.getPrimeExceptionnelle()));
+		if (bulletinBrut == null) {
+			throw new BulletinNonTrouveException("Aucun bulletin de salaire correspondant à ce code n'a été trouvé.");
 		}
+		DtoBulletinUnique resultat = new DtoBulletinUnique();
+		affectation.affecterEntreprise(resultat, bulletinBrut);
+		affectation.affecterEmploye(resultat, bulletinBrut);
+		affectation.affecterPeriode(resultat, bulletinBrut);
+
+		affectation.affecterSalaireBrut(resultat, bulletinBrut);
 		List<Cotisation> cotisationsNonImposables = bulletinBrut.getRemunerationEmploye().getProfilRemuneration()
 				.getCotisations().stream().filter(c -> !c.getImposable()).collect(Collectors.toList());
 
@@ -174,7 +174,8 @@ public class BulletinSalaireService {
 		}
 
 		resultat.setTableauCotisationsNonImposables(new TableauCotisationsNonImposablesDto(cotisationsNonImposablesDto,
-				retenue, resultat.getSalaireBrut().getSalaireBrut().subtract(retenue)));
+				retenue,
+				resultat.getSalaireBrut().getSalaireBrut().subtract(retenue).setScale(2, RoundingMode.HALF_UP)));
 
 		List<Cotisation> cotisationsImposables = bulletinBrut.getRemunerationEmploye().getProfilRemuneration()
 				.getCotisations().stream().filter(c -> c.getImposable()).collect(Collectors.toList());
@@ -189,11 +190,12 @@ public class BulletinSalaireService {
 		Optional<BigDecimal> retenue2Optional = cotisationsImposablesDto.stream().map(c -> c.getMontantSalarial())
 				.reduce((c1, c2) -> (c1.add(c2)));
 		if (retenue2Optional.isPresent()) {
-			retenue2 = retenue2Optional.get();
+			retenue2 = retenue2Optional.get().setScale(2, RoundingMode.HALF_UP);
 		}
 
 		resultat.setTableauCotisationsImposablesDto(new TableauCotisationsImposablesDto(cotisationsImposablesDto,
-				resultat.getTableauCotisationsNonImposables().getNetImposable().subtract(retenue2)));
+				resultat.getTableauCotisationsNonImposables().getNetImposable().subtract(retenue2).setScale(2,
+						RoundingMode.HALF_UP)));
 
 		return resultat;
 
