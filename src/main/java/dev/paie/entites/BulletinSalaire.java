@@ -1,6 +1,7 @@
 package dev.paie.entites;
 
 import java.math.BigDecimal;
+import java.time.ZonedDateTime;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -8,6 +9,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.PrePersist;
 import javax.persistence.Table;
 
 @Entity
@@ -26,18 +28,31 @@ public class BulletinSalaire {
 	private Periode periode;
 	private BigDecimal primeExceptionnelle;
 
+	private ZonedDateTime dateCreation;
+
 	public BulletinSalaire() {
 		super();
 	}
 
-	public BulletinSalaire(Integer id, String code, RemunerationEmploye remunerationEmploye, Periode periode,
+	public BulletinSalaire(String code, RemunerationEmploye remunerationEmploye, Periode periode,
 			BigDecimal primeExceptionnelle) {
 		super();
-		this.id = id;
 		this.code = code;
 		this.remunerationEmploye = remunerationEmploye;
 		this.periode = periode;
 		this.primeExceptionnelle = primeExceptionnelle;
+	}
+
+	@PrePersist
+	public void fixerDateCreation() {
+		this.dateCreation = ZonedDateTime.now();
+	}
+
+	@Override
+	public String toString() {
+		return "BulletinSalaire [id=" + id + ", code=" + code + ", remunerationEmploye=" + remunerationEmploye
+				+ ", periode=" + periode + ", primeExceptionnelle=" + primeExceptionnelle + ", dateCreation="
+				+ dateCreation + "]";
 	}
 
 	@Override
@@ -45,6 +60,7 @@ public class BulletinSalaire {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((code == null) ? 0 : code.hashCode());
+		result = prime * result + ((dateCreation == null) ? 0 : dateCreation.hashCode());
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
 		result = prime * result + ((periode == null) ? 0 : periode.hashCode());
 		result = prime * result + ((primeExceptionnelle == null) ? 0 : primeExceptionnelle.hashCode());
@@ -65,6 +81,11 @@ public class BulletinSalaire {
 			if (other.code != null)
 				return false;
 		} else if (!code.equals(other.code))
+			return false;
+		if (dateCreation == null) {
+			if (other.dateCreation != null)
+				return false;
+		} else if (!dateCreation.equals(other.dateCreation))
 			return false;
 		if (id == null) {
 			if (other.id != null)
@@ -89,40 +110,16 @@ public class BulletinSalaire {
 		return true;
 	}
 
-	@Override
-	public String toString() {
-		return "BulletinSalaire [id=" + id + ", code=" + code + ", remunerationEmploye=" + remunerationEmploye
-				+ ", periode=" + periode + ", primeExceptionnelle=" + primeExceptionnelle + "]";
-	}
-
-	public RemunerationEmploye getRemunerationEmploye() {
-		return remunerationEmploye;
-	}
-
-	public void setRemunerationEmploye(RemunerationEmploye remunerationEmploye) {
-		this.remunerationEmploye = remunerationEmploye;
-	}
-
-	public Periode getPeriode() {
-		return periode;
-	}
-
-	public void setPeriode(Periode periode) {
-		this.periode = periode;
-	}
-
-	public BigDecimal getPrimeExceptionnelle() {
-		return primeExceptionnelle;
-	}
-
-	public void setPrimeExceptionnelle(BigDecimal primeExceptionnelle) {
-		this.primeExceptionnelle = primeExceptionnelle;
-	}
-
+	/**
+	 * @return the id
+	 */
 	public Integer getId() {
 		return id;
 	}
 
+	/**
+	 * @param id the id to set
+	 */
 	public void setId(Integer id) {
 		this.id = id;
 	}
@@ -139,6 +136,62 @@ public class BulletinSalaire {
 	 */
 	public void setCode(String code) {
 		this.code = code;
+	}
+
+	/**
+	 * @return the remunerationEmploye
+	 */
+	public RemunerationEmploye getRemunerationEmploye() {
+		return remunerationEmploye;
+	}
+
+	/**
+	 * @param remunerationEmploye the remunerationEmploye to set
+	 */
+	public void setRemunerationEmploye(RemunerationEmploye remunerationEmploye) {
+		this.remunerationEmploye = remunerationEmploye;
+	}
+
+	/**
+	 * @return the periode
+	 */
+	public Periode getPeriode() {
+		return periode;
+	}
+
+	/**
+	 * @param periode the periode to set
+	 */
+	public void setPeriode(Periode periode) {
+		this.periode = periode;
+	}
+
+	/**
+	 * @return the primeExceptionnelle
+	 */
+	public BigDecimal getPrimeExceptionnelle() {
+		return primeExceptionnelle;
+	}
+
+	/**
+	 * @param primeExceptionnelle the primeExceptionnelle to set
+	 */
+	public void setPrimeExceptionnelle(BigDecimal primeExceptionnelle) {
+		this.primeExceptionnelle = primeExceptionnelle;
+	}
+
+	/**
+	 * @return the dateCreation
+	 */
+	public ZonedDateTime getDateCreation() {
+		return dateCreation;
+	}
+
+	/**
+	 * @param dateCreation the dateCreation to set
+	 */
+	public void setDateCreation(ZonedDateTime dateCreation) {
+		this.dateCreation = dateCreation;
 	}
 
 }

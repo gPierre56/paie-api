@@ -13,4 +13,6 @@ import dev.paie.entites.RemunerationEmploye;
  */
 public interface IRemunerationEmployeRepository extends JpaRepository<RemunerationEmploye, Integer> {
 
+	public RemunerationEmploye findByMatricule(String matricule);
+
 }
