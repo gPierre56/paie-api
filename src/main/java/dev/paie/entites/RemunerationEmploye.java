@@ -9,6 +9,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 import javax.persistence.PrePersist;
 import javax.persistence.Table;
 
@@ -31,6 +32,8 @@ public class RemunerationEmploye {
 	@JoinColumn
 	private Grade grade;
 	private ZonedDateTime dateCreation;
+	@OneToOne
+	private InfosConnexion infosConnexion;
 
 	public RemunerationEmploye(Integer id, String matricule, Entreprise entreprise,
 			ProfilRemuneration profilRemuneration, Grade grade, ZonedDateTime dateCreation) {
@@ -41,6 +44,17 @@ public class RemunerationEmploye {
 		this.profilRemuneration = profilRemuneration;
 		this.grade = grade;
 		this.dateCreation = dateCreation;
+	}
+
+	public RemunerationEmploye(String matricule, Entreprise entreprise, ProfilRemuneration profilRemuneration,
+			Grade grade, ZonedDateTime dateCreation, InfosConnexion infosConnexion) {
+		super();
+		this.matricule = matricule;
+		this.entreprise = entreprise;
+		this.profilRemuneration = profilRemuneration;
+		this.grade = grade;
+		this.dateCreation = dateCreation;
+		this.infosConnexion = infosConnexion;
 	}
 
 	public RemunerationEmploye() {
@@ -64,6 +78,7 @@ public class RemunerationEmploye {
 		result = prime * result + ((entreprise == null) ? 0 : entreprise.hashCode());
 		result = prime * result + ((grade == null) ? 0 : grade.hashCode());
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		result = prime * result + ((infosConnexion == null) ? 0 : infosConnexion.hashCode());
 		result = prime * result + ((matricule == null) ? 0 : matricule.hashCode());
 		result = prime * result + ((profilRemuneration == null) ? 0 : profilRemuneration.hashCode());
 		return result;
@@ -98,6 +113,11 @@ public class RemunerationEmploye {
 				return false;
 		} else if (!id.equals(other.id))
 			return false;
+		if (infosConnexion == null) {
+			if (other.infosConnexion != null)
+				return false;
+		} else if (!infosConnexion.equals(other.infosConnexion))
+			return false;
 		if (matricule == null) {
 			if (other.matricule != null)
 				return false;
@@ -115,47 +135,77 @@ public class RemunerationEmploye {
 	public String toString() {
 		return "RemunerationEmploye [id=" + id + ", matricule=" + matricule + ", entreprise=" + entreprise
 				+ ", profilRemuneration=" + profilRemuneration + ", grade=" + grade + ", dateCreation=" + dateCreation
-				+ "]";
+				+ ", infosConnexion=" + infosConnexion + "]";
 	}
 
-	public String getMatricule() {
-		return matricule;
-	}
-
-	public void setMatricule(String matricule) {
-		this.matricule = matricule;
-	}
-
-	public Entreprise getEntreprise() {
-		return entreprise;
-	}
-
-	public void setEntreprise(Entreprise entreprise) {
-		this.entreprise = entreprise;
-	}
-
-	public ProfilRemuneration getProfilRemuneration() {
-		return profilRemuneration;
-	}
-
-	public void setProfilRemuneration(ProfilRemuneration profilRemuneration) {
-		this.profilRemuneration = profilRemuneration;
-	}
-
-	public Grade getGrade() {
-		return grade;
-	}
-
-	public void setGrade(Grade grade) {
-		this.grade = grade;
-	}
-
+	/**
+	 * @return the id
+	 */
 	public Integer getId() {
 		return id;
 	}
 
+	/**
+	 * @param id the id to set
+	 */
 	public void setId(Integer id) {
 		this.id = id;
+	}
+
+	/**
+	 * @return the matricule
+	 */
+	public String getMatricule() {
+		return matricule;
+	}
+
+	/**
+	 * @param matricule the matricule to set
+	 */
+	public void setMatricule(String matricule) {
+		this.matricule = matricule;
+	}
+
+	/**
+	 * @return the entreprise
+	 */
+	public Entreprise getEntreprise() {
+		return entreprise;
+	}
+
+	/**
+	 * @param entreprise the entreprise to set
+	 */
+	public void setEntreprise(Entreprise entreprise) {
+		this.entreprise = entreprise;
+	}
+
+	/**
+	 * @return the profilRemuneration
+	 */
+	public ProfilRemuneration getProfilRemuneration() {
+		return profilRemuneration;
+	}
+
+	/**
+	 * @param profilRemuneration the profilRemuneration to set
+	 */
+	public void setProfilRemuneration(ProfilRemuneration profilRemuneration) {
+		this.profilRemuneration = profilRemuneration;
+	}
+
+	/**
+	 * @return the grade
+	 */
+	public Grade getGrade() {
+		return grade;
+	}
+
+	/**
+	 * @param grade the grade to set
+	 */
+	public void setGrade(Grade grade) {
+		this.grade = grade;
 	}
 
 	/**
@@ -170,6 +220,20 @@ public class RemunerationEmploye {
 	 */
 	public void setDateCreation(ZonedDateTime dateCreation) {
 		this.dateCreation = dateCreation;
+	}
+
+	/**
+	 * @return the infosConnexion
+	 */
+	public InfosConnexion getInfosConnexion() {
+		return infosConnexion;
+	}
+
+	/**
+	 * @param infosConnexion the infosConnexion to set
+	 */
+	public void setInfosConnexion(InfosConnexion infosConnexion) {
+		this.infosConnexion = infosConnexion;
 	}
 
 	/**
